@@ -1,0 +1,28 @@
+---
+title: "testing"
+author: "Yuqi Tu"
+date: "11/21/2017"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(readr)
+library(readxl)
+library(janitor)
+```
+
+
+```{r}
+testing = read_csv("./Data/2017_jan_new.csv") %>% 
+  clean_names() %>% 
+  select(-ncol(.)) %>% 
+  select(-carrier_delay, -weather_delay, -nas_delay, -security_delay, -late_aircraft_delay) 
+
+testing_name = read_csv("./Data/2017_jan_new.csv") %>% 
+  distinct()
+
+# testing_na = testing %>%
+sum(is.na(testing$arr_del15))
+```
+
