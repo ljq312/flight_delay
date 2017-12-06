@@ -1,20 +1,91 @@
 ---
-title: "Factors Associated with Changes in Flight Delay between 2012 and 2016"
+title: "Factors Associated with Changes in Flight Delay During 2012 and 2016"
 author: "Jiaqi Li (jl5025), Yuqi Tu (yt2604), Xin Yin (xy2364)"
-date: "November 29, 2017"
 output: 
-  
- 
-     html_document:
+   html_document:
     code_folding: hide
 editor_options: 
   chunk_output_type: console
 ---
 ***
 ##### Instruction for accessing the project data:
-1. Download data "flightdelay.zip" (here)[https://drive.google.com/file/d/1yp4FE0RtAl6XEQF-skBIQioVy03PhImS/view?usp=sharing]
-2. 
+1. Clone the project repository from our [github](https://github.com/ljq312/flight_delay).
+1. Download data ["delay_data_5yrs.zip"](https://drive.google.com/file/d/1jNhh2SoAaJ-OxQtViVBeP4-_wAQ5wXps/view?usp=sharing) and save to your local cloned repository.
+2. Unzip "delay_data-5yrs.zip".
+The screenshot below illustrate this configuration.
+<img src="Data instruction.png" style = "width:80%">
+
 ***
+
+### Introduction & Motivation
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Nowadays, airline travel has become a mainstream of transportation. Fueled by a tremendous demand in business and travel, there is no doubt that, flight delays or cancellations are frustrating for any air travelers and costly to airlines and passengers (Ball et al., 2010). In the past ten years, among the 12 biggest U.S. airlines (e.g. United Airlines, American Airlines, etc), more than 20% of the commercial flights delay. Punctuality is an issue for all major carriers, with some having more serious delays than others, through 2012, Frontier Airlines flights were on time just 75% of the time, and last year more than a quarter of its flights were delayed (popularmechanics.com). \
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There are various delayed causes in reality. For example, about 30% of all tardy flights between June of 2015 and June 2016 can be blamed directly on inclement weather(businessinsider.com). But in many other cases, historical data would suggest that some other flights are much more likely to be delayed due to carrier delay. Concurrently, as mentioned previously, the airline itself is an apparent predictor of the phenomenon that a flight is delayed; despite these possible reasons, there are many factors that are able to allow us to gauge the likelihood and pattern of a flight being delayed.  The aim of this project is to use relatively large historical datasets from 2012 to 2016, to explore factors and patterns associating with US. flight delays and to compare them through different perspectives.
+
+***
+
+### Initial Question
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Now, large amounts of detialed data regarding industries and government are publicized on the internet, allowing us to investigate airline statistics. With data in hand, we can look at the raw flight data and explore what factors associated with changes in flight delay between 2012 and 2016. We want to assess the data in three different aspects: major causes of flight delay, time pattern of flight delay, and the average delay time per delayed flights of U.S. domestic airlines.\
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; In major causes of flight delay, we want to evaluate what major causes have the large frequency within the five years. Then, after looking at the time pattern of flight delay, we want to observe what is the time pattern of flight delay and the average delay time per delayed flights of different U.S. airlines. Additionally, we want to explore wether there is an significant difference in the mean delayed minutes casued by late aircraft delay between 2012 and 2016. 
+
+***
+
+### Data and Methods
+We used database "Airline On-Time Performance Data", which comes from Bureau of Transportation Statistics (BTS). The database is accessed from [here](https://www.transtats.bts.gov/Fields.asp?Table_ID=236). Data can be download by clicking on "Download" under "Data tools".
+
+#### Context
+The U.S. Department of Transportation's (DOT) Bureau of Transportation Statistics (BTS) tracks the on-time performance of domestic flights operated by large air carriers. Summary information on the number of on-time, delayed, canceled and diverted flights appears in DOT's monthly Air Travel Consumer Report, published about 30 days after the month's end, as well as in summary tables posted on this website. BTS began collecting details on the causes of flight delays in June 2003. Summary statistics and raw data are made available to the public at the time the Air Travel Consumer Report is released.
+
+#### How data obtained
+We checked variable boxes that we interested in in database [download page](https://www.transtats.bts.gov/DL_SelectFields.asp?Table_ID=), and made selections from the “Filter Year” and “Filter Period” drop-down lists, downloaded data month by month from 2012 January to 2016 December (in total 60 csv files were downloaded). After downloading, unzip each zip file and place all unzip files in a same folder under the project repository. We merged 60 csv files by column names (using function `rbind()`).\
+Please note that there wasn’t an API to speed this process up or make it reproducible.
+
+
+#### Varaibles
+We selected 23 variables related to our initial questions from 109 variables, and chose time range from 2012 Janurary to 2016 December. Our insterested variables fall into three categories based on variable types:
+
+1. Indicator variables
+2. Continuous variables
+3. Categorical variables
+
+In **indicator variables**, we have:
+
+* `dep_del15`: Departure Delay Indicator, 15 Minutes or More (1=Yes)
+* `arr_del15`: Arrival Delay Indicator, 15 Minutes or More (1=Yes)
+* `cancelled`: Cancelled Flight Indicator (1=Yes)
+* `diverted`: Diverted Flight Indicator (1=Yes)
+
+In **continuous variables**, we have:
+
+* `dep_time`: Actual Departure Time (local time: hhmm).
+* `dep_delay`: Difference in minutes between scheduled and actual departure time. Early departures show negative numbers.
+* `arr_time`: Actual Arrival Time (local time: hhmm).
+* `arr_delay`: Difference in minutes between scheduled and actual arrival time. Early arrivals show negative numbers.
+* `distance`: Distance between airports (miles).
+* `carrier_delay`: Carrier Delay, in Minutes. Carrier Delay such as: Aircraft cleaning, Maintenance, Late crew.
+* `weather_delay`: Weather Delay, in Minutes. Weather Delay such as: Below minimum conditions, Thunder Storm, Tornado.
+* `nas_delay`: National Air System Delay, in Minutes. National Air System Delay such as : Air Traffic Control (ATC), Bird strikes, Closed Runways.
+* `security_delay`: Security Delay, in Minutes. Security Delay such as: Lines at screening area that exceed standard time, Bomb threat, Inoperative screening equipment - TSA.
+* `late_aircraft_delay`: Late Arriving Aircraft Delay, in Minutes. Late Arriving Aircraft means a previous flight with the same aircraft arrived late which caused the present flight to depart late. \
+(More information regarding to delay causes can be found [here](https://www.rita.dot.gov/bts/sites/rita.dot.gov.bts/files/subject_areas/airline_information/accounting_and_reporting_directives/technical_directive_21.html).)
+
+In **categorical variables**, we have:
+
+* `year`: Year
+* `month`: Month
+* `day_of_month`: Day of Month
+* `day_of_week`: Day of Week
+* `unique_carrier`: Unique Carrier Code (Airline). (Carrier Code for Airline can be found [here](https://www.transtats.bts.gov/FieldInfo.asp?Field_Desc=Unique%20Carrier%20Code.%20When%20the%20same%20code%20has%20been%20used%20by%20multiple%20carriers%2C%20a%20numeric%20suffix%20is%20used%20for%20earlier%20users%2C%20for%20example%2C%20PA%2C%20PA%281%29%2C%20PA%282%29.%20Use%20this%20field%20for%20analysis%20across%20a%20range%20of%20years.&Field_Type=Char&Lookup_Table=L_UNIQUE_CARRIERS&Table_ID=236&SYS_Table_Name=T_ONTIME&Sys_Field_Name=UNIQUE_CARRIER)) 
+* `fl_num`: Flight Number
+* `origin`: Origin Airport
+* `dest`: Destination Airport
+* `cancellation_code`: Specifies The Reason For Cancellation. (Cancellation Code Description can be found [here](https://www.transtats.bts.gov/FieldInfo.asp?Field_Desc=Specifies%20The%20Reason%20For%20Cancellation&Field_Type=Char&Lookup_Table=L_CANCELLATION&Table_ID=236&SYS_Table_Name=T_ONTIME&Sys_Field_Name=CANCELLATION_CODE))
+
+#### Criterion for flight delays
+A flight is counted as "on time" if it operated less than 15 minutes later the scheduled time shown in the carriers' Computerized Reservations Systems (CRS). Arrival performance is based on arrival at the gate. Departure performance is based on departure from the gate. In all of our analysis, we apply `arr_del15`=1 as indication of flight delays. More information can be found [here](https://www.rita.dot.gov/bts/help/aviation/index.html).\
+Furthermore, since we only select the flights that were delayed, all calculations and analysis performed in this study are among the data of delayed flights. 
+
+***
+
 
 
 ```{r library, message=FALSE, warning=FALSE}
@@ -26,8 +97,6 @@ library(plotly)
 library(stringr)
 library(forcats)
 library(tidyverse)
-# library(tidytext)
-library(psych)
 library(DT)
 ```
 
@@ -35,16 +104,15 @@ library(DT)
 
 load_data = function(path){
   files = dir(path, pattern = "\\.csv", full.names = TRUE)
-  tables = lapply(files, fread)
-  do.call(rbind, tables)
+  tables = lapply(files, fread) ## search every csv file in the data folder
+  do.call(rbind, tables)  ## combine 60 csv files by the name of columns using rbind() function
 }
 
-delay_data <- load_data("/srv/data/cumc/flightdelay/delay_data_5yrs") %>% 
+delay_data <- load_data("/srv/data/cumc/flightdelay/delay_data_5yrs") %>% ## When reproduce this project, please change the path to "./delay_data_5yrs"
   clean_names() %>% 
-  # select(year, month, day_of_month, day_of_week, dep_time, arr_delay, arr_del15, carrier_delay, weather_delay, nas_delay, security_delay, late_aircraft_delay, unique_carrier) %>% 
-  mutate(month, month = factor(month, labels = month.name),
+  mutate(month, month = factor(month, labels = month.name),  ## change month from number to month.name
          dep_time = as.character(dep_time),
-         dep_time = substr(dep_time,1,2))
+         dep_time = substr(dep_time,1,2)) ## condense 1-59 minutes of each hour into one data point, eg., 1:00-1:59 -> 1:00
   
          
 ```
@@ -53,20 +121,15 @@ delay_data <- load_data("/srv/data/cumc/flightdelay/delay_data_5yrs") %>%
 ### Exploratory Analysis
 
 #### Data Overview
-There are 29722792 observations of 23 variables in delay_data dataset. Each observation represent one flight. Domestic flights operated by large air carriers from 2012 January to 2016 Janurary were included in the dataset. Variables fall into three categories based on variable types: continuous variables, categorical variables, and indicator variables, including summary information on the flights performance and descriptive information about flights, such as `arr_delay`, `day_of_month`, _etc_.\
+There are 29722792 observations of 23 variables in delay_data dataset. Each observation represent one flight. Domestic flights operated by large air carriers from 2012 January to 2016 December were included in the dataset. Variables fall into three categories based on variable types: continuous variables, categorical variables, and indicator variables, including summary information on the flights performance and descriptive information about flights, such as `arr_delay`, `day_of_month`, _etc_.\
 Descriptive statistics for continous variables are in the chart below.
 
 ```{r explore data, message=F, warning=F}
 str(delay_data)
 
-delay_data[,c(9, 10, 12, 13, 18, 19:23)] %>% 
-  describe() %>% 
-  datatable()
-count(unique(delay_data$unique_carrier))
+delay_data[,c(9, 10, 12, 13, 18, 19:23)] %>% ## descriptive analysis
+  summary() 
 
-sum(delay_data$cancelled == 1)
-sum(delay_data$arr_del15 == 0)
-sum(delay_data$diverted == 1)
 
 ```
 
@@ -74,15 +137,19 @@ sum(delay_data$diverted == 1)
 The dataset has no missing value. All NAs are meaningful. For cancelled flights, `cancelled` = 1. Since no delay performance data can be recorded, NAs are shown in `dep_delay`, `dep_del15`, `arr_delay`, `arr_del15`, `carrier_delay`, `weather_delay`, `nas_delay`, `security_delay`, and`late_aircraft_delay`. There are total `r sum(delay_data$cancelled == 1)` cancelled flights in the dataset. For `arr_del15` = 1, indicating flights arrived ontime, no delay performance data could be recorded either. NAs are shown in `carrier_delay`, `weather_delay`, `nas_delay`, `security_delay`, and `late_aircraft_delay`. For `diverted`=1, indicating flights are routed from its original arrival destination to a new arrival destination, NAs are shown in `arr_delay`, `arr_del15`, `carrier_delay`, `weather_delay`, `nas_delay`, `security_delay`, and `late_aircraft_delay`. There are total `r sum(delay_data$diverted == 1)` diverted flights in the dataset.
 
 #### Analysis
-Following analysis addresses three different aspects: _major causes of flight delay, time pattern of flight delay, and the average delay time of the U.S. domestic airlines_.
+Following analysis addresses three different aspects: _major causes of flight delay, time pattern of flight delay, and the average delay time per delayed flights of the U.S. domestic airlines_.
 
-##### Major Causes of Flight Delay
+
+**Major Causes of Flight Delay**
 ```{r bar graph data, message = FALSE, warning= FALSE}
 
 general_bargraph_data = delay_data %>% 
-  filter(arr_del15 == 1) %>% 
+  filter(arr_del15 == 1) %>% # filter for choosing the flight that delayed 15 mins and above(our criterion for delay flights)
+
   select(carrier_delay, weather_delay, nas_delay, security_delay, late_aircraft_delay) 
-  
+
+
+# Here, since we want to counts the total delayed flights in different combinations of causes, not the total delay minutes, we mutate the delay minutes in each cause as 1 (meaning "Yes" for the delay cause) , or 0 (meaning "No" for the delay cause). The Detailed illustration is shown on the output table.  
 general_bargraph_data$carrier_delay[general_bargraph_data$carrier_delay != 0] = 1
 general_bargraph_data$weather_delay[general_bargraph_data$weather_delay != 0] = 1
 general_bargraph_data$nas_delay[general_bargraph_data$nas_delay != 0] = 1
@@ -91,7 +158,7 @@ general_bargraph_data$late_aircraft_delay[general_bargraph_data$late_aircraft_de
 
 general_bargraph_data = setDT(general_bargraph_data)[,list(Count = .N) ,names(general_bargraph_data)]
 
-
+# This function is for generate the name of the combination of delay causes. When the delay causes has "1" meaning "Yes", then the function asks it to return the name of the delay.
 print_xaxis_1 <- function(i) {
   xaxis <- character()
 if(general_bargraph_data$carrier_delay[i] == 1) {
@@ -113,13 +180,16 @@ return(xaxis)
 }
 
 
-
+# the dataset "general_bargraph_data"has 31 rows. We made a vector contains all the names of the combination of delay causes.
 loop <- c(1:31)
 xname <- map_chr(loop, print_xaxis_1) 
 
+# combine the names of the combination of delay causes to the combination data frame that created above by the observation numbers.
 general_bargraph_data <- general_bargraph_data %>% 
    mutate(cause_of_delay = xname)
 
+
+# plot graph 
 cause_bar_graph <- general_bargraph_data %>% 
   mutate(cause_of_delay = fct_reorder(cause_of_delay, Count, .desc = TRUE)) %>%
   head(10) %>% 
@@ -127,23 +197,27 @@ cause_bar_graph <- general_bargraph_data %>%
   geom_bar(stat = "identity") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "The Total Count of Airline Delay with Different Causes",
-         x = "cause(s) of delay", y = "counts")
+         x = "cause(s) of delay", y = "counts") +
+  theme(legend.background = element_rect(fill=alpha('white', 0.4)))
   
 ggplotly(cause_bar_graph)
 
-# Table indicates the all combinations (29) of major causes of flight delay from 2012 to 2016. 
+# Table indicates the all combinations (31) of major causes of flight delay from 2012 to 2016. 
 
 table_general_bargraph = general_bargraph_data %>% 
   datatable(class = "display")
 table_general_bargraph
 
 ```
+\
+\
+**Comments:** From the summary table above, there are 31 combinations of the major causes of flight delay. Although there are some delayed flights caused by one major cause, other delayed flights are caused by more than one major cause. The major causes in the dataset include: Carrier delay, Weather delay, National System delay, Security delay, and Late aircraft delay. The table shows the total counts of each combinations of major causes from 2012 to 2016. Please note that "1" indicates "Yes" and "0" indicates "No". \
+From the bar graph, 'The Frequency of Airline Delay Due to Different Causes', the National Aviation System delay variable (NAS delay) has the most total counts (193,121 counts) of the flight delay from 2012 to 2016. Following with the NAS delay, the combination of Carrier delay and Late Aircraft delay, Carrier delay , Late Aircraft delay, the combination of Carrier delay and NAS delay, the combination of Late Aircraft delay and NAS delay, and the combination of Carrier delay, NAS system delay, and Late aircraft delay also have a large total counts of the flight delay within the period compared to the rest of 24 combinations of the major causes. 
+\
+\
 
-**Comments:** From the summary table above, there are `r length(general_bargraph_data)` combinations of the major causes of flight delay. Although there are some delayed flights caused by one major cause, other delayed flights are caused by more than one major cause. The major causes in the dataset include: Carrier delay, Weather delay, National System delay, Security delay, and Late aircraft delay. The table shows the total counts of each combinations of major causes from 2012 to 2016. Please note that "1" indicates "Yes" and "0" indicates "No". \
-From the bar graph, 'The Frequency of Airline Delay Due to Different Causes', the National Aviation System delay variable (NAS delay) has the most total counts (193,121 counts) of the flight delay from 2012 to 2016. Following with the NAS delay, the combination of Carrier delay and Late Aircraft delay, Carrier delay , Late Aircraft delay, the combination of Carrier delay and NAS delay, the combination of Late Aircraft delay and NAS delay, and the combination of Carrier delay, NAS system delay, and Late aircraft delay also have a large total counts of the flight delay within the period compared to the rest of `r length(general_bargraph_data)-7` combinations of the major causes. 
+**Time Pattern of Flight Delay**
 
-
-##### Time Pattern of Flight Delay
 ```{r month, message=FALSE, warning=FALSE}
 season_pattern <- delay_data %>%
  select(c(1:5, 10, 11, 13, 14, 18:23)) %>% 
@@ -155,10 +229,11 @@ agg3 = aggregate(nas_delay ~ year + month, data = season_pattern, mean)
 agg4 = aggregate(security_delay ~ year + month, data = season_pattern, mean)
 agg5 = aggregate(late_aircraft_delay ~ year + month, data = season_pattern, mean)
 
-agg = cbind(agg1, agg2[,3],  agg3[,3], agg4[,3], agg5[,3])
+agg = cbind(agg1, agg2[,3],  agg3[,3], agg4[,3], agg5[,3]) # Combine the subsets
 
-colnames(agg)[-c(1:3)] = colnames(season_pattern)[12:15]
+colnames(agg)[-c(1:3)] = colnames(season_pattern)[12:15] # rename the columns
 
+#combine all the data from 2012-2016
 agg12 = agg[seq(1,56,5),]  
 agg13 =  agg[seq(2,57,5),]
 agg14 = agg[seq(3,58,5),]
@@ -167,6 +242,7 @@ agg16 = agg[seq(5,60,5),]
 agg_sum  = rbind(agg12,agg13,agg14,agg15,agg16)
 head(agg_sum)
 
+#use gather and change it into a long dataset
 agg_sum2 = gather(agg_sum, carrier_delay:late_aircraft_delay, "delay" , -year, -month)
 agg_sum2$month = factor(agg_sum2$month)
 colnames(agg_sum2)[3] = "cause_of_delay"
@@ -181,13 +257,50 @@ ggplotly(plot_1)
 
   
 ```
+\
+\
+**Comments:**
+From the graph through 5 years we know that the patterns among 2012-2016 are alike across months and types of delay causes. Each year, it seems like the average delay time across months has a tendency to increase from January to June and peaks at the end of July/the beginning of August, then it starts to decrease but it reaches to another small peak again at the end of the year. \
+
+Across years, it seems like there might be differences on delayed time due to late aircraft, we are then curious about the significance of its difference between 2012 and 2016. Thus, we are going to utilize t-test to determine.
+\
+\
+```{r t test boxplot, summary, t test}
+agg12 = agg[seq(1,56,5),]  
+agg16 = agg[seq(5,60,5),]
+agg12_16 = rbind(agg12, agg16) %>% select(year, late_aircraft_delay)
+agg_boxplot = 
+  ggplot(agg_sum, aes(year, late_aircraft_delay, fill = year))+
+  geom_boxplot(aes(group = year))
+agg_boxplot
+
+descrip = with(agg12_16, tapply(late_aircraft_delay, year, summary))
+df_12_16 = rbind(descrip[[1]], descrip[[2]])
+rownames(df_12_16) = c("2012", "2016")
+df_12_16
+  
+t.test(late_aircraft_delay ~ year, data = agg12_16, var.equal = T)
+```
+\
+\
+**Comment:**
+From the side-by-side boxplot, it can be seen that the spread of the boxes are close for data in 2012 and 2016, indicating that the cariances are about the same. So equal vaiance assumption can be considered true for the following test.\
+
+From the basic statistics, it also can be seen that the average late aircraft delay time in 2016 is only a little bit longer than that in 2012. We make formal hypotheses as below:
+Null hypothesis: the mean time delayed caused by late aircraft in 2012 is not different from that in 2016
+Alternative hypothesis: the mean time delayed caused by late aircraft in 2012 is different from that in 2016.\
+
+Since the p-value of the t test is 0.3588 which is greater than 0.05, there is no enough evidence to reject the null hypothesis. 
+The mean time delayed caused by late aircraft do not have much difference between 2012 and 2016. 
+\
+\
 
 ```{r day, message=FALSE, warning=FALSE}
 month_delay <- delay_data %>% 
-  select(year, month, day_of_month, arr_delay, arr_del15) %>% 
-  filter(arr_del15 == 1) %>% 
+  select(year, month, day_of_month, arr_delay, arr_del15) %>% ## select needed variable for this plot
+  filter(arr_del15 == 1) %>%  ## filter late arrival flights
   group_by(month, day_of_month) %>% 
-  summarize(mean_delay = (mean(arr_delay))) %>% 
+  summarize(mean_delay = (mean(arr_delay))) %>% ## summarize mean of delay (delay minute per flight)
   ggplot(aes(x = day_of_month, y = mean_delay, color = month)) +
     geom_point() +
     geom_line() +
@@ -197,27 +310,30 @@ month_delay <- delay_data %>%
 
 ggplotly(month_delay)
 ```
-**Comment:** Each dot on the plot represents the average delay minute per delayed flight on the same date of 5 years. For example, the dot on January 1st has average delay minute per delayed flight of 56, which means that averaging 5 years' January 1st. \
+\
+\
+**Comment:** Each dot represents a single day of the year, To achive each data point, we took the summation fo the delays gathered across 5 years' time for every day of the monthm each devided 5 to achieve the average delay in minutes(30 days, 30 data points per month). \
 We can see from the graph that August 8th and 9th have the highest and the second highest value across whole years, which means that these two days have the longest delay time. Looking at lines pairwisely, August also serves as a cut point for average delay minute switch from increase trend to decrease trend. The overall average delay minute starts to increase from May to August, and decrease after August. However, December's delay is obviously higher than November. Assessing December trend alone, 17th has the longest delay in December. Assessing November trend alone, 17th and 21th have equally highest value in delay.
 
-**Discussion:** The plot across everyday of a year might give us an accessibility to the association between flight delay and holidays. December 17th and November 17th and 21th are all before big holidays, Christmas and Thanksgiving. It might due to a large number of people want to either fly back to home or fly to somewhere else to take holidays off. Since we do not have data related to passenger flow volume, we cannot assess the relationship between passenger volume and delay time. \
-The plot also shows that delay increase at summer, especially in August. There is a piece of news saying "Hotter air gets thin, making it harder to take off and land safely, mostly for smaller jets.", and explains why some airplains don't fly in high heat. Since summer has higher temperature, it probably explain why delay in summer is on average higher than in other seasons. Although the exact reasons for delay cannot be concluded here, it might still be a good idea to avoid taking flights before big holidays and hot days in summer. (phys.org)
+From the five graphs we know that the patterns among 2012-2016 are alike across months and types of delay causes. Each year, it seems like the average delay time across month has a tendency to increase from Jan to Jun and peaks at the end of July/the beginning of Aug, then it starts to decrease but it reaches to another small peak again at the end of the year.
 
-* Reference: https://phys.org/news/2017-06-science-airplanes-dont-high.html
+\
+\
+
+
 
 ```{r week, message=FALSE, warning=FALSE}
 
 week_delay <- delay_data %>% 
-  mutate(day_of_week = factor(day_of_week, labels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>% 
-  select(year, day_of_week, arr_delay, arr_del15, carrier_delay, weather_delay, nas_delay, security_delay, late_aircraft_delay) %>% 
-  filter(arr_del15 == 1) %>% 
+  mutate(day_of_week = factor(day_of_week, labels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>% ## change day_of_week from number to the name each day of a week
+  select(year, day_of_week, arr_delay, arr_del15, carrier_delay, weather_delay, nas_delay, security_delay, late_aircraft_delay) %>%  ## select needed variable for this plot
+  filter(arr_del15 == 1) %>%  ## filter late arrival flights
   group_by(day_of_week) %>% 
   summarize(mean_carrier_delay = mean(carrier_delay), 
             mean_weather_delay = mean(weather_delay), 
             mean_nas_delay = mean(nas_delay), 
             mean_security_delay = mean(security_delay), 
-            mean_late_aircraft_delay = mean(late_aircraft_delay)) %>% 
- # mutate(text_label = str_c('\n', cause_of_delay)) %>% 
+            mean_late_aircraft_delay = mean(late_aircraft_delay)) %>% ## summarize mean of delay for each cause(delay minute per flight)
   plot_ly(x = ~day_of_week, y = ~mean_carrier_delay, type = 'bar', name = 'carrier delay', alpha = 0.8) %>% 
     add_trace(y = ~mean_weather_delay, name = 'weather delay') %>% 
     add_trace(y = ~mean_nas_delay, name = 'national aviation system delay') %>% 
@@ -229,18 +345,32 @@ week_delay <- delay_data %>%
 
 week_delay
 ```
+\
+\
+**Comment:** Each bar represents the average of 5 years' of delay data stratified by day of the week. Each bar for day of the week can be broken down into various causes of delay and each corresponding amount of delay due to that reason. Evaluating the average delay without assessing into each causes, we found there is no difference between 7 days of a week. When assessing into causes, all causes are overall have equal delay time across a week except security delay. Security delay on weekends is almost as twice as the delay on weekdays.
+\
+\
 
-**Comment:** 
+
 
 ```{r hour, message=FALSE, warning=FALSE}
 
 hour_delay = delay_data %>% 
   select(year, dep_time, arr_delay, arr_del15) %>% 
-  mutate(dep_time = recode(dep_time, "24" = "00")) %>%
+  mutate(dep_time = recode(dep_time, "24" = "00")) %>%  ## change 24:00 to 00:00
   group_by(dep_time) %>%
-  summarize(prop = sum(arr_del15, na.rm = T)/ n(), mean_delay = mean(arr_delay[arr_del15 == 1], na.rm = T)) %>%
+  summarize(prop = sum(arr_del15, na.rm = T)/ n(),  ## summarize the proportion of flights delay depends on departure time
+            mean_delay = mean(arr_delay[arr_del15 == 1], ## summarize mean of delay for each hour of a day for delayed flights
+                              na.rm = T)) %>%
   mutate(text_label = str_c("delay minute:", round(mean_delay, 2), "min")) %>% 
-  plot_ly(x = ~dep_time, y = ~prop, type = 'scatter', mode = 'markers', size = ~mean_delay, sizes = c(10, 60), marker = list(opacity = 0.5, sizemode = 'diameter'), text = ~text_label) %>% 
+  plot_ly(x = ~dep_time, 
+          y = ~prop, 
+          type = 'scatter', 
+          mode = 'markers', 
+          size = ~mean_delay, ##buble size = mean_delay
+          sizes = c(10, 60),  ## bubble size range
+          marker = list(opacity = 0.5, sizemode = 'diameter'), 
+          text = ~text_label) %>% 
   layout(title = "24H View: Proportion of Delay & Delay Time in Minute",
          xaxis = list(title = "departure time across 24 Hours"),
          yaxis = list(title = "delay proportion"))
@@ -248,15 +378,19 @@ hour_delay = delay_data %>%
 hour_delay
   
 ```
+\
+\
+**Comment:** Each bubble represents the average of 5 years' of delay data stratified by hour of the day. The graph shows the delay proprtion for each hour of a day depends on flights' departure time.Each data point represents the time interval of 0-59 minutes of each hour, condensed into one data point per hour over 24 hours. For example, data from 7:00 to 7:59 are aggregated at 7:00. The size of bubbles indicates the delay time. The longer the delay time per delayed flights, the large the bubbles are. The graph shows clearly that from 00 to 03, the delay proportion is pretty high, around 0.5. The delay time per delayed flight are also the highest among a day, around 150min. The delay proportion at 04 is the second lowest among a day, however the delay time is relatively high compared to the following hours. From 05 to 23, the delay proportion gradually increase and delay time gradually increase as well.
 
 
 
-
+**The Average Delay Time per Delayed Flights of the U.S. Domestic Airlines**
 ```{r airline, message=FALSE, warning= FALSE}
 general_boxplot = delay_data %>% 
-  filter(arr_del15 == 1) %>% 
+  filter(arr_del15 == 1) %>% # filter for choosing the flight that delayed 15 mins and above(our criterion for delay flights)
   select(unique_carrier, carrier_delay, weather_delay, nas_delay, security_delay, late_aircraft_delay) %>% 
   group_by(unique_carrier) %>%
+   # get the summary data: the mean of delay minutes per delayed flights in different causes. The sum_mean_delay is used for reordering the factors of the following plot.
   summarize(mean_carrier_delay = mean(carrier_delay[carrier_delay != 0]), 
             mean_weather_delay = mean(weather_delay[weather_delay != 0]), 
             mean_nas_delay = mean(nas_delay[nas_delay != 0]), 
@@ -267,6 +401,7 @@ general_boxplot = delay_data %>%
                                  mean_nas_delay, 
                                  mean_security_delay, 
                                  mean_late_aircraft_delay)) %>% 
+  # since some airline do no have the record for security delay, we made it to make the mean of delay minute in security delay is 0. Thus, the security delay minutes of these airlines will not shown the graph below.) 
   mutate(mean_security_delay = ifelse(is.nan(mean_security_delay), 0, mean_security_delay)) %>% 
   mutate(unique_carrier = reorder(unique_carrier, sum_mean_delay)) %>% 
   plot_ly(y = ~unique_carrier, 
@@ -285,3 +420,103 @@ general_boxplot = delay_data %>%
 general_boxplot
 
 ```
+\
+\
+**Comments:** \
+Please note that the airline codes stand for:
+
+    * `FL` = AirTran Airways Corporation
+    * `F9` = Frontier Airlines Inc.
+    * `DL` = Delta Air Lines Inc.
+    * `YV` = Mesa Airlines 
+    * `EV` = ExpressJet Airline Inc.
+    * `OO` = SkyWest Airlines Inc.
+    * `9E` = Endeavor Air Inc.
+    * `UA` = United Air Lines Inc. 
+    * `NK` = Spirit Air Lines
+    * `VX` = Virgin America
+    * `B6` = JetBlue Airways
+    * `AS` = Alaska Airlines Inc.
+    * `AA` = American Airline Inc.
+    * `MQ` = Envoy Air
+    * `US` = US Airways Inc.
+    * `WN` = Southwest Airlines
+    * `HA` = Hawaiian Airlines Inc.
+    
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The graph displays the average of delay minutes per flight with different major causes for the U.S. domestic airlines. Among 17 airlines that the data recorded, Delta Air Lines has the highest average delay minutes per flight among the delayed flights (average delay 200.4493 minutes per delayed flight in the sum of all causes). Mesa Airlines, ExpressJet Airlines Inc., SkyWest Airlines Inc., and Endeavor Air Inc. also have high average of delay minutes per flight among the delayed flights. \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Additionally, all five causes are varied in each airline. From the graph, there are two airlines, _AirTran Airways Corporation_ and _Frontier Airlines Inc._,  do not have delayed flights caused by security delay. Delta Air Lines also has the highest average delay minutes per delayed flight caused by security delay. For NAS system delay, late aircraft delay, and carrier delay, Virgin America, Spirit Air Lines, Mesa Airlines have the highest average delay minutes per delayed flights, respectively. For weather delay, it seems that there is no huge difference in weather delay among all airlines. Mesa Airlines has the largest average delay minutes per delayed flights affected by weather; meanwhile, the weather delay has the least effect on Virgin America. Also, all five causes are varied in each airline. 
+
+
+***
+### Discussion
+The preceding analysis informed our understanding of the major causes of flight delay, time pattern of flight delay, and the average delay time per delayed flights of U.S. domestic airlines.
+
+**Major Causes of Flight Delay**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Based on the result, we know that there are 31 combinations of the major causes of flight delay. This graph and table help us to observe how many delayed flight are caused by the combinations of different major causes. Originally, we did not anticipate that NAS delay is the largest cause. After reviewing extra articles, our result parallels with the article, 'An Answer to Flight Delays?' by Tracy Samantha. A significant reason for flight delays breakdowns within the National Aviation System (NAS), which includes airports and the air traffic control centers. Since the NAS delay includes issues at the air traffic control centers, the Flow control program, and other significant and complex factors, when the issues happened, a number of flight will be affected and might have delay. 
+
+**Time Pattern of Flight Delay**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From the five graphs we know that the patterns among 2012-2016 are alike across months and types of delay causes. Each year, it seems like the average delay time across month has a tendency to increase from Jan to Jun and peaks at the end of July/the beginning of Aug, then it starts to decrease but it reaches to another small peak again at the end of the year.\\
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;There might be two possible reasons could explain that security delay on weekends is almost as twice as the delay on weekdays. The first one is passenger flow volume is higher in weekend than in weekdays, resulting in an shortage of security staff; the second one is the some staff have days off on weekends, leading to longer security time. However, although the delay time is twice in weenkends than in weekdays, the difference is only about 0.5min per delayed flight, which is very slightly. While viewing this from relative scale, the 2 times is worth assessing. In general, there's no difference in delay time across a week.\\
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;From the 24 hours graph, we can tell that if the fligh departs from 00 to 03, almost half of the flight will be delayed, and the delayed time is very long. At 04, the likelihood of flight delay decrease dramatically, however, if the flight delays, it will delay for a long time. The delay proportion and delay time are both small at 05, and gradually increase until 23. It would be better to avoid taking flights departing from 00 to 04.
+
+
+
+**The Average Delay Time per Delayed Flights of the U.S. Domestic Airlines**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;As the result shown, Delta Air Lines has the highest average delay minutes per flight among the delayed flights (average delay 200.4493 minutes per delayed flight in the sum of all causes), especially in the security delay. 200.4493 minutes is a huge number for delay minutes. It might be caused by some outliers that has extremely large delay minutes and the reason is needed to be further investigate. It could be a typo and if not ,it will be interesting to explore what factors cause these huge delay. For example, there is a piece of new showing that "A Delta Flight Was Delayed for 2 Hours Because a Pilot and Flight Attendant Had an Argument" (_www.Fortune.com_). In terms of security delay, we noticed that  _AirTran Airways Corporation_ and _Frontier Airlines Inc._ do not have security delay on the graph, nor the dataset. It might be the true that these two airline barely experience delay due to security within the five years. However, it might not be ideal in the real world. One possible explanation could be that the data might be not recorded in the dataset. We did not predict that Delta Air Lines, Virgin America, Spirit Air Lines, and Mesa Airlines have high delay minutes in each delay causes separately. It will be interesting to do further study to evaluate how do the delay causes affect delayed flights in these airlines. 
+
+#### Limitations
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Overall, our study has some limitations mainly due to lacking some other factors or information that are not recorded in the dataset. In the major causes of flight delay analysis, NAS delay has the highest frequency over the five years, but the lack of strong information to support this result limits our evaluation on finding possible factors or reasons, which contribute to the findings. In the time pattern of delay flights analysis, the information about passenger flow might be a confounder of the relationship between the average delay minutes per delayed flights and the holiday seasons. With the information of passenger flow, we might have better data and perform further formal statistical analysis. Lastly, when we explored the the average delay time per delayed flights of different U.S. airlines, having more information about the outliers in each delay cause helps us to find better trends of delay time in airline data and corresponding explanations to the outliers. 
+
+
+***
+
+### Reference
+
+* Ball, Michael, Cynthia Barnhart, Martin Dresner, Mark Hansen, Kevin Neels, Amedeo Odoni, Everett 
+Peterson, Lance Sherry, Antonio Trani,  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; and Bo Zou. Total Delay Impact Study: A Comprehensive Assessment of the Costs and Impacts of Flight Delay in the United States. Berkeley, Calif.: Institute of Transportation Studies, University of California, Berkeley, 2010. Internet resource.
+
+* Bennett, J. (2017, November 14). The 12 Biggest U.S. Airlines Ranked by Percentage of
+Delayed Flights. \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Retrieved from
+http://webcache.googleusercontent.com/search?q=cache%3A8VgN4tzU0jsJ%3Awww.ppularmechanics.com%2Fflight%2Fg2303%2Fairlines-with-most-delays%2F%2B&cd=1&hl=en&ct=clnk&gl=us
+
+* Borenstein, S., & Koenig, D. (n.d.). Science Says: Why some airplanes don't fly in high heat.\
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Retrieved December 06, 2017, from
+https://phys.org/news/2017-06-science-airplanes-dont-high.html
+
+* Bureau of Transportation Statistics. TranStats Database. http://www.transtats.bts.gov/
+
+* Here are the 3 most common reasons why your flight is delayed\
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Benjamin Zhang - http://www.businessinsider.com/why-your-flight-delayed-2016-12
+
+* HOPEWELL, D. (2017, November 14). Best and Worst Airlines for Flight Delays.\
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Retrieved
+from
+http://www.travelandleisure.com/slideshows/best-and-worst-airlines-for-delays-2014#no
+14-frontier
+
+* Reilly , (n.d.). A Delta Flight Was Delayed for 2 Hours Because a Pilot and
+Flight Attendant Had an Argument. \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Retrieved from
+http://fortune.com/2017/07/25/delta-flight-delay-pilot-argument/
+
+* Reuters , J. (n.d.). Delta Passengers react to Flight Delays Due to Power Outage | Money.\
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Retrieved from http://time.com/money/4443670/delta-passengers-flight-delays/
+
+* Schmidt/Washington, T. S. (2007, August 15). An Answer to Flight Delays? \
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Retrieved December
+06, 2017, from http://content.time.com/time/nation/article/0,8599,1653304,00.html
+
+* The 12 Biggest U.S. Airlines Ranked by Percentage of Delayed Flights\
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Jay Bennett - http://www.popularmechanics.com/flight/g2303/airlines-with-most-delays/
+
+
+
+***
+
+Our project was performed on high performance VPS (Special thanks to Wei Hao)
