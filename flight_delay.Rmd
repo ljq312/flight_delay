@@ -1,0 +1,287 @@
+---
+title: "Factors Associated with Changes in Flight Delay between 2012 and 2016"
+author: "Jiaqi Li (jl5025), Yuqi Tu (yt2604), Xin Yin (xy2364)"
+date: "November 29, 2017"
+output: 
+  
+ 
+     html_document:
+    code_folding: hide
+editor_options: 
+  chunk_output_type: console
+---
+***
+##### Instruction for accessing the project data:
+1. Download data "flightdelay.zip" (here)[https://drive.google.com/file/d/1yp4FE0RtAl6XEQF-skBIQioVy03PhImS/view?usp=sharing]
+2. 
+***
+
+
+```{r library, message=FALSE, warning=FALSE}
+library(data.table)
+library(janitor)
+library(tidyr)
+library(ggplot2)
+library(plotly)
+library(stringr)
+library(forcats)
+library(tidyverse)
+# library(tidytext)
+library(psych)
+library(DT)
+```
+
+```{r loading_data , message=FALSE, warning=FALSE}
+
+load_data = function(path){
+  files = dir(path, pattern = "\\.csv", full.names = TRUE)
+  tables = lapply(files, fread)
+  do.call(rbind, tables)
+}
+
+delay_data <- load_data("/srv/data/cumc/flightdelay/delay_data_5yrs") %>% 
+  clean_names() %>% 
+  # select(year, month, day_of_month, day_of_week, dep_time, arr_delay, arr_del15, carrier_delay, weather_delay, nas_delay, security_delay, late_aircraft_delay, unique_carrier) %>% 
+  mutate(month, month = factor(month, labels = month.name),
+         dep_time = as.character(dep_time),
+         dep_time = substr(dep_time,1,2))
+  
+         
+```
+
+
+### Exploratory Analysis
+
+#### Data Overview
+There are 29722792 observations of 23 variables in delay_data dataset. Each observation represent one flight. Domestic flights operated by large air carriers from 2012 January to 2016 Janurary were included in the dataset. Variables fall into three categories based on variable types: continuous variables, categorical variables, and indicator variables, including summary information on the flights performance and descriptive information about flights, such as `arr_delay`, `day_of_month`, _etc_.\
+Descriptive statistics for continous variables are in the chart below.
+
+```{r explore data, message=F, warning=F}
+str(delay_data)
+
+delay_data[,c(9, 10, 12, 13, 18, 19:23)] %>% 
+  describe() %>% 
+  datatable()
+count(unique(delay_data$unique_carrier))
+
+sum(delay_data$cancelled == 1)
+sum(delay_data$arr_del15 == 0)
+sum(delay_data$diverted == 1)
+
+```
+
+#### NAs
+The dataset has no missing value. All NAs are meaningful. For cancelled flights, `cancelled` = 1. Since no delay performance data can be recorded, NAs are shown in `dep_delay`, `dep_del15`, `arr_delay`, `arr_del15`, `carrier_delay`, `weather_delay`, `nas_delay`, `security_delay`, and`late_aircraft_delay`. There are total `r sum(delay_data$cancelled == 1)` cancelled flights in the dataset. For `arr_del15` = 1, indicating flights arrived ontime, no delay performance data could be recorded either. NAs are shown in `carrier_delay`, `weather_delay`, `nas_delay`, `security_delay`, and `late_aircraft_delay`. For `diverted`=1, indicating flights are routed from its original arrival destination to a new arrival destination, NAs are shown in `arr_delay`, `arr_del15`, `carrier_delay`, `weather_delay`, `nas_delay`, `security_delay`, and `late_aircraft_delay`. There are total `r sum(delay_data$diverted == 1)` diverted flights in the dataset.
+
+#### Analysis
+Following analysis addresses three different aspects: _major causes of flight delay, time pattern of flight delay, and the average delay time of the U.S. domestic airlines_.
+
+##### Major Causes of Flight Delay
+```{r bar graph data, message = FALSE, warning= FALSE}
+
+general_bargraph_data = delay_data %>% 
+  filter(arr_del15 == 1) %>% 
+  select(carrier_delay, weather_delay, nas_delay, security_delay, late_aircraft_delay) 
+  
+general_bargraph_data$carrier_delay[general_bargraph_data$carrier_delay != 0] = 1
+general_bargraph_data$weather_delay[general_bargraph_data$weather_delay != 0] = 1
+general_bargraph_data$nas_delay[general_bargraph_data$nas_delay != 0] = 1
+general_bargraph_data$security_delay[general_bargraph_data$security_delay != 0] = 1
+general_bargraph_data$late_aircraft_delay[general_bargraph_data$late_aircraft_delay != 0] = 1
+
+general_bargraph_data = setDT(general_bargraph_data)[,list(Count = .N) ,names(general_bargraph_data)]
+
+
+print_xaxis_1 <- function(i) {
+  xaxis <- character()
+if(general_bargraph_data$carrier_delay[i] == 1) {
+  xaxis <- "carrier delay"
+}
+if(general_bargraph_data$weather_delay[i] == 1) {
+  xaxis <- paste(xaxis, "weather delay", sep = "/")
+}
+if(general_bargraph_data$nas_delay[i] == 1) {
+  xaxis <- paste(xaxis, "national aviation system delay", sep = "/")
+}
+if(general_bargraph_data$security_delay[i] == 1) {
+  xaxis <- paste(xaxis, "security delay", sep = "/")
+}
+if(general_bargraph_data$late_aircraft_delay[i] == 1) {
+  xaxis <- paste(xaxis, "late aircraft delay", sep = "/") 
+}
+return(xaxis)
+}
+
+
+
+loop <- c(1:31)
+xname <- map_chr(loop, print_xaxis_1) 
+
+general_bargraph_data <- general_bargraph_data %>% 
+   mutate(cause_of_delay = xname)
+
+cause_bar_graph <- general_bargraph_data %>% 
+  mutate(cause_of_delay = fct_reorder(cause_of_delay, Count, .desc = TRUE)) %>%
+  head(10) %>% 
+  ggplot(aes(x = cause_of_delay, y = Count, fill = cause_of_delay)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "The Total Count of Airline Delay with Different Causes",
+         x = "cause(s) of delay", y = "counts")
+  
+ggplotly(cause_bar_graph)
+
+# Table indicates the all combinations (29) of major causes of flight delay from 2012 to 2016. 
+
+table_general_bargraph = general_bargraph_data %>% 
+  datatable(class = "display")
+table_general_bargraph
+
+```
+
+**Comments:** From the summary table above, there are `r length(general_bargraph_data)` combinations of the major causes of flight delay. Although there are some delayed flights caused by one major cause, other delayed flights are caused by more than one major cause. The major causes in the dataset include: Carrier delay, Weather delay, National System delay, Security delay, and Late aircraft delay. The table shows the total counts of each combinations of major causes from 2012 to 2016. Please note that "1" indicates "Yes" and "0" indicates "No". \
+From the bar graph, 'The Frequency of Airline Delay Due to Different Causes', the National Aviation System delay variable (NAS delay) has the most total counts (193,121 counts) of the flight delay from 2012 to 2016. Following with the NAS delay, the combination of Carrier delay and Late Aircraft delay, Carrier delay , Late Aircraft delay, the combination of Carrier delay and NAS delay, the combination of Late Aircraft delay and NAS delay, and the combination of Carrier delay, NAS system delay, and Late aircraft delay also have a large total counts of the flight delay within the period compared to the rest of `r length(general_bargraph_data)-7` combinations of the major causes. 
+
+
+##### Time Pattern of Flight Delay
+```{r month, message=FALSE, warning=FALSE}
+season_pattern <- delay_data %>%
+ select(c(1:5, 10, 11, 13, 14, 18:23)) %>% 
+   filter(arr_del15 == 1)
+
+agg1 = aggregate(carrier_delay ~ year + month, data = season_pattern, mean)
+agg2 = aggregate(weather_delay ~ year + month, data = season_pattern, mean)
+agg3 = aggregate(nas_delay ~ year + month, data = season_pattern, mean)
+agg4 = aggregate(security_delay ~ year + month, data = season_pattern, mean)
+agg5 = aggregate(late_aircraft_delay ~ year + month, data = season_pattern, mean)
+
+agg = cbind(agg1, agg2[,3],  agg3[,3], agg4[,3], agg5[,3])
+
+colnames(agg)[-c(1:3)] = colnames(season_pattern)[12:15]
+
+agg12 = agg[seq(1,56,5),]  
+agg13 =  agg[seq(2,57,5),]
+agg14 = agg[seq(3,58,5),]
+agg15 = agg[seq(4,59,5),]
+agg16 = agg[seq(5,60,5),]
+agg_sum  = rbind(agg12,agg13,agg14,agg15,agg16)
+head(agg_sum)
+
+agg_sum2 = gather(agg_sum, carrier_delay:late_aircraft_delay, "delay" , -year, -month)
+agg_sum2$month = factor(agg_sum2$month)
+colnames(agg_sum2)[3] = "cause_of_delay"
+plot_1 = ggplot(agg_sum2, aes(month, delay, color = cause_of_delay )) + 
+    geom_line(aes(group = cause_of_delay)) + geom_point() +
+  labs(title = "Month of Year View: Delay Minutes of Different Causes of Delay",
+       x = "",
+       y = "average delay minute per delayed flight")
+plot_1= plot_1 + facet_wrap(~year, nrow = 5)
+
+ggplotly(plot_1)
+
+  
+```
+
+```{r day, message=FALSE, warning=FALSE}
+month_delay <- delay_data %>% 
+  select(year, month, day_of_month, arr_delay, arr_del15) %>% 
+  filter(arr_del15 == 1) %>% 
+  group_by(month, day_of_month) %>% 
+  summarize(mean_delay = (mean(arr_delay))) %>% 
+  ggplot(aes(x = day_of_month, y = mean_delay, color = month)) +
+    geom_point() +
+    geom_line() +
+    labs(title = "Day of Month View: Average delay",
+         x = "day of month",
+         y = "average delay minute per delayed flight")
+
+ggplotly(month_delay)
+```
+**Comment:** Each dot on the plot represents the average delay minute per delayed flight on the same date of 5 years. For example, the dot on January 1st has average delay minute per delayed flight of 56, which means that averaging 5 years' January 1st. \
+We can see from the graph that August 8th and 9th have the highest and the second highest value across whole years, which means that these two days have the longest delay time. Looking at lines pairwisely, August also serves as a cut point for average delay minute switch from increase trend to decrease trend. The overall average delay minute starts to increase from May to August, and decrease after August. However, December's delay is obviously higher than November. Assessing December trend alone, 17th has the longest delay in December. Assessing November trend alone, 17th and 21th have equally highest value in delay.
+
+**Discussion:** The plot across everyday of a year might give us an accessibility to the association between flight delay and holidays. December 17th and November 17th and 21th are all before big holidays, Christmas and Thanksgiving. It might due to a large number of people want to either fly back to home or fly to somewhere else to take holidays off. Since we do not have data related to passenger flow volume, we cannot assess the relationship between passenger volume and delay time. \
+The plot also shows that delay increase at summer, especially in August. There is a piece of news saying "Hotter air gets thin, making it harder to take off and land safely, mostly for smaller jets.", and explains why some airplains don't fly in high heat. Since summer has higher temperature, it probably explain why delay in summer is on average higher than in other seasons. Although the exact reasons for delay cannot be concluded here, it might still be a good idea to avoid taking flights before big holidays and hot days in summer. (phys.org)
+
+* Reference: https://phys.org/news/2017-06-science-airplanes-dont-high.html
+
+```{r week, message=FALSE, warning=FALSE}
+
+week_delay <- delay_data %>% 
+  mutate(day_of_week = factor(day_of_week, labels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))) %>% 
+  select(year, day_of_week, arr_delay, arr_del15, carrier_delay, weather_delay, nas_delay, security_delay, late_aircraft_delay) %>% 
+  filter(arr_del15 == 1) %>% 
+  group_by(day_of_week) %>% 
+  summarize(mean_carrier_delay = mean(carrier_delay), 
+            mean_weather_delay = mean(weather_delay), 
+            mean_nas_delay = mean(nas_delay), 
+            mean_security_delay = mean(security_delay), 
+            mean_late_aircraft_delay = mean(late_aircraft_delay)) %>% 
+ # mutate(text_label = str_c('\n', cause_of_delay)) %>% 
+  plot_ly(x = ~day_of_week, y = ~mean_carrier_delay, type = 'bar', name = 'carrier delay', alpha = 0.8) %>% 
+    add_trace(y = ~mean_weather_delay, name = 'weather delay') %>% 
+    add_trace(y = ~mean_nas_delay, name = 'national aviation system delay') %>% 
+    add_trace(y = ~mean_security_delay, name = 'security delay') %>% 
+    add_trace(y = ~mean_late_aircraft_delay, name = 'late aircraft delay') %>% 
+    layout(title = "Weekly view: Delay Minutes of Different Causes of Delay",
+           yaxis = list(title = "average delay minute per delayed flight"), 
+           barmode = 'stack')
+
+week_delay
+```
+
+**Comment:** 
+
+```{r hour, message=FALSE, warning=FALSE}
+
+hour_delay = delay_data %>% 
+  select(year, dep_time, arr_delay, arr_del15) %>% 
+  mutate(dep_time = recode(dep_time, "24" = "00")) %>%
+  group_by(dep_time) %>%
+  summarize(prop = sum(arr_del15, na.rm = T)/ n(), mean_delay = mean(arr_delay[arr_del15 == 1], na.rm = T)) %>%
+  mutate(text_label = str_c("delay minute:", round(mean_delay, 2), "min")) %>% 
+  plot_ly(x = ~dep_time, y = ~prop, type = 'scatter', mode = 'markers', size = ~mean_delay, sizes = c(10, 60), marker = list(opacity = 0.5, sizemode = 'diameter'), text = ~text_label) %>% 
+  layout(title = "24H View: Proportion of Delay & Delay Time in Minute",
+         xaxis = list(title = "departure time across 24 Hours"),
+         yaxis = list(title = "delay proportion"))
+
+hour_delay
+  
+```
+
+
+
+
+```{r airline, message=FALSE, warning= FALSE}
+general_boxplot = delay_data %>% 
+  filter(arr_del15 == 1) %>% 
+  select(unique_carrier, carrier_delay, weather_delay, nas_delay, security_delay, late_aircraft_delay) %>% 
+  group_by(unique_carrier) %>%
+  summarize(mean_carrier_delay = mean(carrier_delay[carrier_delay != 0]), 
+            mean_weather_delay = mean(weather_delay[weather_delay != 0]), 
+            mean_nas_delay = mean(nas_delay[nas_delay != 0]), 
+            mean_security_delay = mean(security_delay[security_delay != 0]), 
+            mean_late_aircraft_delay = mean(late_aircraft_delay[late_aircraft_delay!= 0]), 
+            sum_mean_delay = sum(mean_carrier_delay, 
+                                 mean_weather_delay, 
+                                 mean_nas_delay, 
+                                 mean_security_delay, 
+                                 mean_late_aircraft_delay)) %>% 
+  mutate(mean_security_delay = ifelse(is.nan(mean_security_delay), 0, mean_security_delay)) %>% 
+  mutate(unique_carrier = reorder(unique_carrier, sum_mean_delay)) %>% 
+  plot_ly(y = ~unique_carrier, 
+          x = ~mean_carrier_delay, 
+          type = 'bar', 
+          orientation = 'h',
+          name = 'carrier delay', 
+          alpha = 0.8) %>% 
+    add_trace(x = ~mean_weather_delay, name = 'weather delay') %>% 
+    add_trace(x = ~mean_nas_delay, name = 'national aviation system delay') %>% 
+    add_trace(x = ~mean_security_delay, name = 'security delay') %>% 
+    add_trace(x = ~mean_late_aircraft_delay, name = 'late aircraft delay') %>% 
+    layout(title = "Average Delay Minutes (per delayed flights) with Different Causes in Domestic Airlines",
+           yaxis = list(title = "domestic airlines"),
+           xaxis = list(title = "delay minute per delayed flight"), barmode = 'stack')
+general_boxplot
+
+```
